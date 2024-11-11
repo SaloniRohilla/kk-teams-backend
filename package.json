@@ -1,0 +1,17 @@
+{
+  "name": "kk-teams-backend",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000k\u0000k\u0000-\u0000t\u0000e\u0000a\u0000m\u0000s\u0000-\u0000b\u0000a\u0000c\u0000k\u0000e\u0000n\u0000d\u0000\r\u0000 \u0000",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev" : "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.1",
+    "mongoose": "^8.8.1",
+    "nodemon": "^3.1.7"
+  }
+}
