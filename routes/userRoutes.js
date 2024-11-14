@@ -9,8 +9,6 @@ const router = express.Router();
 router.post('/signup', async (req, res) => {
   const { name, email, role, password, confirmPassword } = req.body;
 
-  console.log("Request Body:", req.body);
-
   try {
     // Validate input fields
     if (!name || !email || !password || !confirmPassword || !role) {
@@ -28,8 +26,8 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ message: 'Email is already registered' });
     }
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash the password using bcrypt
+    const hashedPassword = await bcrypt.hash(password, 10);  // 10 is the salt rounds
 
     // Create a new user with the hashed password
     const user = new User({
@@ -46,44 +44,52 @@ router.post('/signup', async (req, res) => {
     res.status(201).json({ message: 'User registered successfully' });
 
   } catch (err) {
-    console.error(err);
+    console.error("Error during signup:", err);
     res.status(500).json({ message: 'Server error, please try again' });
   }
 });
 
-// POST route for user login
+
+// Login route
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Validate input fields
+    // Check if email and password are provided
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
     // Find the user by email
     const user = await User.findOne({ email });
+    console.log("User fetched from DB:", user);  // Log the user data
+
     if (!user) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Compare the entered password with the hashed password in the database
+    // Log both plain-text password and the hashed password stored in DB
+    console.log('Plain-text password:', password);
+    console.log('Hashed password from DB:', user.password);
+
+    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Password match result:", isMatch);  // Logs true or false
+
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate a JWT token for the authenticated user
+    // If passwords match, generate a token
     const token = jwt.sign(
-      { userId: user._id, role: user.role }, // Payload
-      process.env.JWT_SECRET, // Secret key from environment variable
-      { expiresIn: '1h' } // Token expiration time (optional)
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
     );
 
-    // Send the token and user data in the response
     res.status(200).json({
       message: 'Login successful',
-      token, // JWT token
+      token,
       user: {
         _id: user._id,
         name: user.name,
@@ -93,33 +99,38 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Error during login:", err);
     res.status(500).json({ message: 'Server error, please try again' });
   }
 });
 
-// POST route for token verification
-router.post('/verify', async (req, res) => {
-  const token = req.body.token; // Get token from request body
+
+
+// GET route to verify JWT token
+router.get('/verifyToken', async (req, res) => {
+  const token = req.headers.authorization && req.headers.authorization.split(" ")[1];
+
+  if (!token) {
+    return res.status(400).json({ message: 'Token not provided' });
+  }
 
   try {
-    // Verify JWT token using the secret key
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded JWT:", decoded); // Add log to see decoded JWT
 
     if (!decoded) {
       return res.status(400).json({ message: 'Invalid token' });
     }
 
-    // Find the user by ID extracted from the token
     const user = await User.findById(decoded.userId);
+    console.log("User found by ID:", user); // Log the user found by ID
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
 
-    // If everything is valid, return the user data and token status
     res.status(200).json({ message: 'Token is valid', user });
-
   } catch (err) {
+    console.error("Error verifying token:", err);
     res.status(400).json({ message: 'Invalid token or server error' });
   }
 });
