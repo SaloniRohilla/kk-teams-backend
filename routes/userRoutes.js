@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user'); // User model path
-const verifyToken = require('../middlewares/authMiddleware'); // Middleware to verify token (if required in some routes)
+const verify = require('../middlewares/authMiddleware'); // Middleware to verify token (if required in some routes)
 const router = express.Router();
 
 // POST route for user signup
@@ -64,31 +64,42 @@ router.post('/login', async (req, res) => {
 
 
 // GET route to verify JWT token
-router.get('/verifyToken', async (req, res) => {
-  const token = req.headers.authorization && req.headers.authorization.split(" ")[1];
+router.get('/verify', async (req, res) => {
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];  // Extract Bearer token
 
   if (!token) {
     return res.status(400).json({ message: 'Token not provided' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded JWT:", decoded); // Add log to see decoded JWT
+    // Verify token
+    const decoded = jwt.verify(token, process.env.secret);  // Make sure the secret is correct
 
-    if (!decoded) {
-      return res.status(400).json({ message: 'Invalid token' });
-    }
+    console.log('Decoded JWT:', decoded); // Log decoded token for debugging
 
+    // Fetch user based on decoded userId
     const user = await User.findById(decoded.userId);
-    console.log("User found by ID:", user); // Log the user found by ID
+    console.log('User found by ID:', user); // Log user found by ID
+
     if (!user) {
-      return res.status(400).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    res.status(200).json({ message: 'Token is valid', user });
+    // Token is valid and user is found
+    return res.status(200).json({ message: 'Token is valid', user });
   } catch (err) {
-    console.error("Error verifying token:", err);
-    res.status(400).json({ message: 'Invalid token or server error' });
+    // Log the error for debugging purposes
+    console.error('Error verifying token:', err);
+
+    // Send detailed error message based on error type
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(400).json({ message: 'Invalid token' });
+    } else if (err.name === 'TokenExpiredError') {
+      return res.status(400).json({ message: 'Token has expired' });
+    }
+
+    // For other errors
+    return res.status(500).json({ message: 'Server error while verifying token' });
   }
 });
 

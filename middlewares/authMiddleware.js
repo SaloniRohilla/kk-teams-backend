@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const verifyToken = (req, res, next) => {
+const verify = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', ''); // Extract token from the Authorization header
 
   if (!token) {
@@ -9,7 +9,7 @@ const verifyToken = (req, res, next) => {
 
   try {
     // Verify the token and add the decoded user info to the request object
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.secret);
     req.user = decoded; // Save decoded user info to request object
     next(); // Proceed to the next middleware or route handler
   } catch (err) {
@@ -17,4 +17,4 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-module.exports = verifyToken;
+module.exports = verify;
