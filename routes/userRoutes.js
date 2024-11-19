@@ -7,45 +7,32 @@ const router = express.Router();
 
 // POST route for user signup
 router.post('/signup', async (req, res) => {
-  const { name, email, role, password, confirmPassword } = req.body;
+  const { name, email, password, role} = req.body;
 
   try {
-    // Validate input fields
-    if (!name || !email || !password || !confirmPassword || !role) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    // Check if passwords match
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
-    // Check if email is already registered
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email is already registered' });
+      return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash the password using bcrypt
-    const hashedPassword = await bcrypt.hash(password, 10);  // 10 is the salt rounds
+    // Create new user 
+    const newUser = new User({ name, email, password, role});
+    await newUser.save();
 
-    // Create a new user with the hashed password
-    const user = new User({
-      name,
-      email,
-      role,
-      password: hashedPassword,  // Store the hashed password
+    const { token } = await User.matchPasswordAndGenerateToken(email, password);
+    res.cookie('authToken', token, { httpOnly: true });
+    res.status(201).json({ 
+      message: 'User created successfully', 
+      token, 
+      user: { 
+        name: newUser.name, 
+        email: newUser.email, 
+        role: newUser.role
+        
+      } 
     });
-
-    // Save the user to the database
-    await user.save();
-
-    // Return success response
-    res.status(201).json({ message: 'User registered successfully' });
-
-  } catch (err) {
-    console.error("Error during signup:", err);
-    res.status(500).json({ message: 'Server error, please try again' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating user', error: error.message });
   }
 });
 
@@ -55,52 +42,22 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Check if email and password are provided
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    // Find the user by email
+    const { token } = await User.matchPasswordAndGenerateToken(email, password);
     const user = await User.findOne({ email });
-    console.log("User fetched from DB:", user);  // Log the user data
-
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    // Log both plain-text password and the hashed password stored in DB
-    console.log('Plain-text password:', password);
-    console.log('Hashed password from DB:', user.password);
-
-    // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log("Password match result:", isMatch);  // Logs true or false
-
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    // If passwords match, generate a token
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.status(200).json({
-      message: 'Login successful',
-      token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+    res.cookie('authToken', token, { httpOnly: true });
+    res.status(200).json({ 
+      message: 'Login successful', 
+      token, 
+      user: { 
+        name: user.name, 
+        email: user.email, 
+        _id: user._id 
+      } 
     });
-
-  } catch (err) {
-    console.error("Error during login:", err);
-    res.status(500).json({ message: 'Server error, please try again' });
+    console.log('User ID on successful login:', user._id);
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(400).json({ message: 'Invalid credentials', error: error.message });
   }
 });
 
