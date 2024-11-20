@@ -64,44 +64,44 @@ router.post('/login', async (req, res) => {
 
 
 // GET route to verify JWT token
-router.get('/verify', async (req, res) => {
-  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];  // Extract Bearer token
+// router.get('/verify', async (req, res) => {
+//   const token = req.headers.authorization && req.headers.authorization.split(' ')[1];  // Extract Bearer token
 
-  if (!token) {
-    return res.status(400).json({ message: 'Token not provided' });
-  }
+//   if (!token) {
+//     return res.status(400).json({ message: 'Token not provided' });
+//   }
 
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.secret);  // Make sure the secret is correct
+//   try {
+//     // Verify token
+//     const decoded = jwt.verify(token, process.env.secret);  // Make sure the secret is correct
 
-    console.log('Decoded JWT:', decoded); // Log decoded token for debugging
+//     console.log('Decoded JWT:', decoded); // Log decoded token for debugging
 
-    // Fetch user based on decoded userId
-    const user = await User.findById(decoded.userId);
-    console.log('User found by ID:', user); // Log user found by ID
+//     // Fetch user based on decoded userId
+//     const user = await User.findById(decoded.userId);
+//     console.log('User found by ID:', user); // Log user found by ID
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
 
-    // Token is valid and user is found
-    return res.status(200).json({ message: 'Token is valid', user });
-  } catch (err) {
-    // Log the error for debugging purposes
-    console.error('Error verifying token:', err);
+//     // Token is valid and user is found
+//     return res.status(200).json({ message: 'Token is valid', user });
+//   } catch (err) {
+//     // Log the error for debugging purposes
+//     console.error('Error verifying token:', err);
 
-    // Send detailed error message based on error type
-    if (err.name === 'JsonWebTokenError') {
-      return res.status(400).json({ message: 'Invalid token' });
-    } else if (err.name === 'TokenExpiredError') {
-      return res.status(400).json({ message: 'Token has expired' });
-    }
+//     // Send detailed error message based on error type
+//     if (err.name === 'JsonWebTokenError') {
+//       return res.status(400).json({ message: 'Invalid token' });
+//     } else if (err.name === 'TokenExpiredError') {
+//       return res.status(400).json({ message: 'Token has expired' });
+//     }
 
-    // For other errors
-    return res.status(500).json({ message: 'Server error while verifying token' });
-  }
-});
+//     // For other errors
+//     return res.status(500).json({ message: 'Server error while verifying token' });
+//   }
+// });
 
 // Optionally, if you want to protect specific routes, you can use verifyToken middleware here
 // For example, for any route that requires a valid token (authentication), you can add:
