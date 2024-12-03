@@ -51,7 +51,8 @@ router.post('/login', async (req, res) => {
       user: { 
         name: user.name, 
         email: user.email, 
-        _id: user._id 
+        _id: user._id._bsontype,
+        role: user.role 
       } 
     });
     console.log('User ID on successful login:', user._id);
