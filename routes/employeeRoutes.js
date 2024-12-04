@@ -27,14 +27,13 @@ router.get('/employees/:id', async (req, res) => {
 
 // Create a new employee (user with role 'user')
 router.post('/employees', async (req, res) => {
-  const { name, email, password, department } = req.body;
+  const { name, email, password } = req.body;  // Remove department from here
   try {
     const newUser = new User({
       name,
       email,
       password,
       role: 'user',  // Set role as 'user' for employees
-      department,    // Assuming department is part of the User schema
     });
     await newUser.save();
     res.status(201).json(newUser);
@@ -43,13 +42,12 @@ router.post('/employees', async (req, res) => {
   }
 });
 
-// Update employee data (e.g., department)
+// Update employee data (e.g., department) - No department in update
 router.put('/employees/:id', async (req, res) => {
-  const { department } = req.body;  // Update department
   try {
     const updatedEmployee = await User.findByIdAndUpdate(
       req.params.id,
-      { department },
+      req.body,  // No department anymore
       { new: true }
     );
     if (!updatedEmployee || updatedEmployee.role !== 'user') {
