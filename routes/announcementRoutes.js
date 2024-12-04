@@ -116,22 +116,25 @@ router.put('/:id', async (req, res) => {
 
 
 // Express.js route to handle DELETE request for announcement by ID
-app.delete('/api/announcements/:id', (req, res) => {
-  const announcementId = req.params.id; // Retrieve the ID from the URL
-  
-  // Check if the announcement exists before deleting
-  Announcement.findByIdAndDelete(announcementId)
-    .then(deletedAnnouncement => {
-      if (!deletedAnnouncement) {
-        return res.status(404).json({ message: 'Announcement not found' });
-      }
-      res.status(200).json({ message: 'Announcement deleted successfully' });
-    })
-    .catch(err => {
-      console.error('Error deleting announcement:', err);
-      res.status(500).json({ message: 'Failed to delete announcement' });
-    });
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid ID format' });
+  }
+
+  try {
+    const deletedAnnouncement = await Announcement.findByIdAndDelete(id);
+    if (!deletedAnnouncement) {
+      return res.status(404).json({ message: 'Announcement not found' });
+    }
+    res.status(200).json({ message: 'Announcement deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting announcement:', err);
+    res.status(500).json({ message: 'Failed to delete announcement' });
+  }
 });
+
 
 
 module.exports = router;
