@@ -1,36 +1,65 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const userRoutes = require('./routes/userRoutes'); // Import user routes
-const employeeRoutes = require('./routes/employeeRoutes'); // Import employee routes
-const announcementRoutes = require('./routes/announcementRoutes'); // Import announcement routes
-const leaveRoutes = require('./routes/leaveRoutes'); // Import leave routes
-const connectToDatabase = require('./db'); // Database connection
-require('dotenv').config(); // Load environment variables from .env file
+const userRoutes = require('./routes/userRoutes');
+const employeeRoutes = require('./routes/employeeRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
+const leaveRoutes = require('./routes/leaveRoutes');
+const connectToDatabase = require('./db');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());  // Enable CORS for all routes
-app.use(express.json());  // To parse incoming JSON requests
-
-// Use the user routes for handling signup and login
-app.use('/api/users', userRoutes);  // This ensures /api/users/signup and /api/users/login
-
-// Use the employee routes for handling employee-related actions
-app.use('/api/employees', employeeRoutes);  // This will route to employee-specific actions
-
-// Use the announcement routes for handling announcement-related actions
-app.use('/api/announcements', announcementRoutes);  // This will route to announcement-related actions
-
-// Use the leave routes for handling leave-related actions
-app.use('/api/leave-requests', leaveRoutes);  // This will route to leave request-related actions
-
-// Connect to the database
-connectToDatabase();
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// Comprehensive request logging middleware
+app.use((req, res, next) => {
+  console.log('-----------------------------------');
+  console.log(`Received ${req.method} request to ${req.path}`);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Body:', JSON.stringify(req.body, null, 2));
+  next();
 });
+
+app.use(cors());
+app.use(express.json()); // IMPORTANT: Ensure this is before route definitions
+app.use(express.urlencoded({ extended: true }));
+
+// Detailed route registration logging
+console.log('Registering routes...');
+app.use('/api/users', userRoutes);
+console.log('User routes registered');
+
+app.use('/api/employees', employeeRoutes);
+console.log('Employee routes registered');
+
+app.use('/api/announcements', announcementRoutes);
+console.log('Announcement routes registered');
+
+app.use('/api/leave-requests', leaveRoutes);
+console.log('Leave routes registered');
+
+// Catch-all route to log any unhandled routes
+app.use((req, res, next) => {
+  console.log('Unhandled route:', req.method, req.path);
+  next();
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  res.status(500).json({
+    message: 'An unexpected error occurred',
+    error: err.message
+  });
+});
+
+// Database connection
+connectToDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to connect to database:', error);
+  });
