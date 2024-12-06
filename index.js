@@ -5,6 +5,7 @@ const userRoutes = require('./routes/userRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
 const announcementRoutes = require('./routes/announcementRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
+const departmentRoutes = require('./routes/deptRoutes');
 const connectToDatabase = require('./db');
 require('dotenv').config();
 
@@ -37,6 +38,8 @@ console.log('Announcement routes registered');
 
 app.use('/api/leave-requests', leaveRoutes);
 console.log('Leave routes registered');
+
+app.use('/api/departments', departmentRoutes);
 
 // Catch-all route to log any unhandled routes
 app.use((req, res, next) => {

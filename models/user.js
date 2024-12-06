@@ -8,6 +8,11 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },  // Password field
   role: { type: String, default: 'user' },
+  department: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
+    default: null
+}
 });
 
 // // Hash the password before saving the user model
